@@ -6,6 +6,7 @@ var morgan		= require('morgan');
 var config		= require('./config');
 
 var app			= express();
+
 //connect to mongodb
 mongoose.connect(config.database);
 mongoose.connection.on('error', function(err){

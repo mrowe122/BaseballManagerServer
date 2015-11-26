@@ -4,6 +4,7 @@ var Schema		= mongoose.Schema;
 
 //player schema
 var PlayerSchema = new Schema({
+	_id:					{type: String, required: true},
 	name:					{type: String, required: true},
 	number:					{type: Number, required: true},
 	team_name:				{type: String, required: true},
