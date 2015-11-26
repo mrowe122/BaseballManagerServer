@@ -9,7 +9,7 @@ var TeamSchema = new Schema({
 	phone:		{type: String},
 	email:		{type: String},
 	wins:		{type: Number},
-	losses:		{type: Number}
+	lose:		{type: Number}
 });
 
 //return the model
