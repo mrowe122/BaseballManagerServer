@@ -1,12 +1,44 @@
 var mongoose	= require('mongoose');
-var Player		= require('../models/playerModel');
+var PlayerModel	= require('../models/playerModel');
 var Team		= require('../models/teamModel');
 var shortid		= require('shortid');
+var jwt			= require('jsonwebtoken');
 
 module.exports = function(app, express) {
 	var apiRouter = express.Router();
+/*
+//later use for setting up a token for authentication
+	apiRouter.post('/authenticate', function (req, res) {
+		User.findOne({
+			username:req.body.username
+		}).select('name email password').exec(function (err, user) {
+			if(err)
+				throw err;
+			if(!user)
+				return res.send('Sorry, authentication failed.');
+			else if (user) {
+				var validPassword = user.comparePassword(req.body.password);
 
-	apiRouter.route('/newplayer')
+				if(!validPassword)
+					return res.send('Sorry, password did not match');
+				else {
+					var token = jwt.sign({
+						name: user.name,
+						email: user.email
+					}, config.secret, {
+						expiresInMinutes: 1440
+					});
+					res.json({
+						success: true,
+						message: 'heres your token',
+						token: token
+					});
+				}
+			}
+		});
+	});
+*/
+	apiRouter.route('/players')
 		.post(function (req, res) {
 
 			//instantiate needed variables
@@ -16,7 +48,7 @@ module.exports = function(app, express) {
 			var info = [];
 
 			for(i = 1; i < count; i++) {
-				var player = new Player();
+				var player = new PlayerModel();
 				player._id					= shortid.generate();
 				player.name					= obj[i].name;
 				player.number				= obj[i].number;
@@ -45,20 +77,67 @@ module.exports = function(app, express) {
 				info.push(player);
 			}
 
-			Player.create(info, function (err, docs) {
-				if(err) {
-					return res.json({
-						message:'Something went wrong'
-					})
-				} else {
-					return res.json({
-						message:'Players created'
-					})
-				}
+			PlayerModel.create(info, function (err, docs) {
+				if(err)
+					return res.send('Something went wrong');
+				else
+					return res.send('Players created');
+			});
+		})
+
+		.get(function (req, res) {
+			PlayerModel.find({}, function (err, players) {
+				if (err)
+					return res.send(err);
+				else
+					return res.json(players);
 			});
 		});
 
-	apiRouter.route('/newteam')
+	apiRouter.route('/players/:player_id')
+		.get(function (req, res) {
+			PlayerModel.findById(req.params.player_id, function (err, player) {
+				if (err)
+					return res.send(err);
+				else 
+					return res.json(player);
+			});
+		})
+		.put(function (req, res) {
+			//find player with id
+			PlayerModel.findById(req.params.player_id, function (err, player) {
+				if (err)
+					return res.send(err);
+
+				//only update if data has changedb
+				if(req.body.name)
+					player.name = req.body.name;
+
+				if(req.body.number)
+					player.number = req.body.number;
+
+				if(req.body.team_name)
+					player.team_name = req.body.team_name;
+
+				if(req.body.bats)
+					player.bats = req.body.bats;
+
+				if(req.body.throws_)
+					player.throws_ = req.body.throws_;
+
+				if(req.body.position)
+					player.position = req.body.position;
+
+				player.save(function (err) {
+					if (err)
+						return res.send(err);
+					else
+						return res.json('Player updated');
+				});
+			});
+		});
+
+	apiRouter.route('/teams')
 		.post(function (req, res) {
 			var team = new Team();
 			team.name	= req.body.name;
@@ -69,15 +148,10 @@ module.exports = function(app, express) {
 			team.lose	= 0;
 
 			team.save(function (err) {
-				if(err) {
-					return res.json({
-						message:'Something went wrong'
-					});
-				} else {
-					return res.json({
-						message:'Team created'
-					});
-				}
+				if(err)
+					return res.send('Something went wrong');
+				else
+					return res.send('Team created');
 			});
 		});
 
