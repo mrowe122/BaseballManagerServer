@@ -1,7 +1,6 @@
 var mongoose	= require('mongoose');
 var PlayerModel	= require('../models/playerModel');
 var Team		= require('../models/teamModel');
-var shortid		= require('shortid');
 var jwt			= require('jsonwebtoken');
 
 module.exports = function(app, express) {
@@ -42,20 +41,18 @@ module.exports = function(app, express) {
 		.post(function (req, res) {
 
 			//instantiate needed variables
-			var obj = req.body;
-			//total number of players added will be the first parameter
-			var count = obj[0].count + 1;
+			var jArray = req.body;
 			var info = [];
 
-			for(i = 1; i < count; i++) {
+			for(i = 0; i < jArray.length; i++) {
 				var player = new PlayerModel();
-				player._id					= shortid.generate();
-				player.name					= obj[i].name;
-				player.number				= obj[i].number;
-				player.team_name			= obj[i].team;
-				player.bats					= obj[i].bats;
-				player.throws_				= obj[i].throws_;
-				player.position				= obj[i].position;
+				player._id					= jArray[i]._id
+				player.name					= jArray[i].name;
+				player.number				= jArray[i].number;
+				player.team_name			= jArray[i].team;
+				player.bats					= jArray[i].bats;
+				player.throws_				= jArray[i].throws_;
+				player.position				= jArray[i].position;
 				player.batting_avg			= 0;
 				player.rbi					= 0;
 				player.runs					= 0;
@@ -67,6 +64,7 @@ module.exports = function(app, express) {
 				player.triple				= 0;
 				player.home_runs			= 0;
 				player.fly_balls			= 0;
+				player.ground_balls			= 0;
 				player.on_base_percentage	= 0;
 				player.bases_stolen			= 0;
 				player.caught_stealing		= 0;
@@ -89,6 +87,8 @@ module.exports = function(app, express) {
 			PlayerModel.find({}, function (err, players) {
 				if (err)
 					return res.send(err);
+				else if (!players.length)
+					return res.send('null');
 				else
 					return res.json(players);
 			});
@@ -153,6 +153,13 @@ module.exports = function(app, express) {
 				else
 					return res.send('Team created');
 			});
+		});
+
+	apiRouter.route('/test')
+		.post(function (req, res) {
+			var team = req.body;
+			console.log(team.length);
+			return res.send('Team created');
 		});
 
 	return apiRouter;

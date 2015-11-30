@@ -22,6 +22,7 @@ var PlayerSchema = new Schema({
 	triple:					{type: Number},
 	home_runs:				{type: Number},
 	fly_balls:				{type: Number},
+	ground_balls:			{type: Number},
 	on_base_percentage:		{type: Number},
 	bases_stolen:			{type: Number},
 	caught_stealing:		{type: Number},
