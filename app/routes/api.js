@@ -46,7 +46,7 @@ module.exports = function(app, express) {
 
 			for(i = 0; i < jArray.length; i++) {
 				var player = new PlayerModel();
-				player._id					= jArray[i]._id
+				//player._id					= jArray[i]._id
 				player.name					= jArray[i].name;
 				player.number				= jArray[i].number;
 				player.team_name			= jArray[i].team;
