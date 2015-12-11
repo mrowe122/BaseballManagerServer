@@ -77,7 +77,7 @@ module.exports = function(app, express) {
 
 			PlayerModel.create(info, function (err, docs) {
 				if(err)
-					return res.send('Something went wrong');
+					return res.send(err);
 				else
 					return res.send('Players created');
 			});
@@ -149,7 +149,7 @@ module.exports = function(app, express) {
 
 			team.save(function (err) {
 				if(err)
-					return res.send('Something went wrong');
+					return res.send(err);
 				else
 					return res.send('Team created');
 			});
