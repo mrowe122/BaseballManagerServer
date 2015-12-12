@@ -1,7 +1,7 @@
 var mongoose	= require('mongoose');
-var PlayerModel	= require('../models/playerModel');
-var Team		= require('../models/teamModel');
+var TeamModel	= require('../models/teamModel');
 var jwt			= require('jsonwebtoken');
+var shortid		= require('shortid');
 
 module.exports = function(app, express) {
 	var apiRouter = express.Router();
@@ -39,52 +39,22 @@ module.exports = function(app, express) {
 */
 	apiRouter.route('/players')
 		.post(function (req, res) {
-
-			//instantiate needed variables
-			var jArray = req.body;
-			var info = [];
-
-			for(i = 0; i < jArray.length; i++) {
-				var player = new PlayerModel();
-				//player._id					= jArray[i]._id
-				player.name					= jArray[i].name;
-				player.number				= jArray[i].number;
-				player.team_name			= jArray[i].team;
-				player.bats					= jArray[i].bats;
-				player.throws_				= jArray[i].throws_;
-				player.position				= jArray[i].position;
-				player.batting_avg			= 0;
-				player.rbi					= 0;
-				player.runs					= 0;
-				player.hits					= 0;
-				player.strike_outs			= 0;
-				player.walks				= 0;
-				player.single				= 0;
-				player.double_				= 0;
-				player.triple				= 0;
-				player.home_runs			= 0;
-				player.fly_balls			= 0;
-				player.ground_balls			= 0;
-				player.on_base_percentage	= 0;
-				player.bases_stolen			= 0;
-				player.caught_stealing		= 0;
-				player.errors_				= 0;
-				player.field_percentage		= 0;
-				player.put_outs				= 0;
-
-				info.push(player);
-			}
-
-			PlayerModel.create(info, function (err, docs) {
+			console.log(req.body.players);
+			TeamModel.findOneAndUpdate(
+				{coach_email: req.body.email},
+				{$push: {players: req.body.players}},
+				{safe: true, upsert: true},
+				function (err, docs) {
 				if(err)
 					return res.send(err);
 				else
-					return res.send('Players created');
-			});
+					return res.send('Players stored');
+				}
+			);
 		})
 
 		.get(function (req, res) {
-			PlayerModel.find({}, function (err, players) {
+			TeamModel.find({}, function (err, players) {
 				if (err)
 					return res.send(err);
 				else if (!players.length)
@@ -96,7 +66,7 @@ module.exports = function(app, express) {
 
 	apiRouter.route('/players/:player_id')
 		.get(function (req, res) {
-			PlayerModel.findById(req.params.player_id, function (err, player) {
+			TeamModel.findById(req.params.player_id, function (err, player) {
 				if (err)
 					return res.send(err);
 				else 
@@ -105,7 +75,7 @@ module.exports = function(app, express) {
 		})
 		.put(function (req, res) {
 			//find player with id
-			PlayerModel.findById(req.params.player_id, function (err, player) {
+			TeamModel.findById(req.params.player_id, function (err, player) {
 				if (err)
 					return res.send(err);
 
@@ -137,29 +107,14 @@ module.exports = function(app, express) {
 			});
 		});
 
-	apiRouter.route('/teams')
+	apiRouter.route('/team')
 		.post(function (req, res) {
-			var team = new Team();
-			team.name	= req.body.name;
-			team.coach	= req.body.coach;
-			team.phone	= req.body.phone;
-			team.email	= req.body.email;
-			team.wins	= 0;
-			team.lose	= 0;
-
-			team.save(function (err) {
+			TeamModel.create(req.body, function (err) {
 				if(err)
 					return res.send(err);
 				else
 					return res.send('Team created');
 			});
-		});
-
-	apiRouter.route('/test')
-		.post(function (req, res) {
-			var team = req.body;
-			console.log(team.length);
-			return res.send('Team created');
 		});
 
 	return apiRouter;
