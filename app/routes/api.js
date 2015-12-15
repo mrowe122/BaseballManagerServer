@@ -1,7 +1,9 @@
 var mongoose	= require('mongoose');
 var TeamModel	= require('../models/teamModel');
+var PlayerModel	= require('../models/playerModel');
 var jwt			= require('jsonwebtoken');
 var shortid		= require('shortid');
+var encryption	= require('../../config/decrypt.js');
 
 module.exports = function(app, express) {
 	var apiRouter = express.Router();
@@ -39,82 +41,48 @@ module.exports = function(app, express) {
 */
 	apiRouter.route('/players')
 		.post(function (req, res) {
-			console.log(req.body.players);
-			TeamModel.findOneAndUpdate(
-				{coach_email: req.body.email},
-				{$push: {players: req.body.players}},
-				{safe: true, upsert: true},
-				function (err, docs) {
-				if(err)
-					return res.send(err);
-				else
-					return res.send('Players stored');
-				}
-			);
+			req.body.players.forEach(function (player) {
+				PlayerModel.update(
+					{playerId: player.playerId}, player, {upsert:true}, function (err) {
+						if(err)
+							res.send(err);
+					});
+			});
+			return res.send('Players synced');
 		})
-
-		.get(function (req, res) {
-			TeamModel.find({}, function (err, players) {
-				if (err)
-					return res.send(err);
-				else if (!players.length)
-					return res.send('null');
-				else
-					return res.json(players);
-			});
-		});
-
-	apiRouter.route('/players/:player_id')
-		.get(function (req, res) {
-			TeamModel.findById(req.params.player_id, function (err, player) {
-				if (err)
-					return res.send(err);
-				else 
-					return res.json(player);
-			});
-		})
-		.put(function (req, res) {
-			//find player with id
-			TeamModel.findById(req.params.player_id, function (err, player) {
-				if (err)
-					return res.send(err);
-
-				//only update if data has changedb
-				if(req.body.name)
-					player.name = req.body.name;
-
-				if(req.body.number)
-					player.number = req.body.number;
-
-				if(req.body.team_name)
-					player.team_name = req.body.team_name;
-
-				if(req.body.bats)
-					player.bats = req.body.bats;
-
-				if(req.body.throws_)
-					player.throws_ = req.body.throws_;
-
-				if(req.body.position)
-					player.position = req.body.position;
-
-				player.save(function (err) {
-					if (err)
-						return res.send(err);
-					else
-						return res.json('Player updated');
-				});
-			});
-		});
 
 	apiRouter.route('/team')
 		.post(function (req, res) {
-			TeamModel.create(req.body, function (err) {
-				if(err)
-					return res.send(err);
-				else
-					return res.send('Team created');
-			});
+			var team = new TeamModel(req.body);
+			var check = encryption.decrypt(team.teamId);
+			if (check) {
+				team.coach_email = check;
+				TeamModel.update(
+					{coach_email: team.coach_email}, team, {upsert:true}, function (err, numberAffected, response) {
+						if(err)
+							console.log(err);
+					});
+				return res.send('Team synced');
+			} else {
+				return res.json({'Error' : 'invalid'});
+			}
+		});
+
+	apiRouter.route('/team/*')
+		.get(function (req, res) {
+			var check = encryption.decrypt(req.params[0]);
+			if (check) {
+				TeamModel.findOne({coach_email: check}, function (err, team) {
+					if(!team)
+						return res.json({code: '99000'});
+
+					PlayerModel.find({teamId : req.params[0]}, function (err, players) {
+						return res.json({code: '77123',	Team: team, Player: players});
+					})
+				})
+			} else {
+				return res.json({error: 'invalid'});
+			}
 		});
 
 	return apiRouter;
